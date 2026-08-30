@@ -1,0 +1,322 @@
+.ed {
+  padding: 0; height: 100vh; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+/* Kepala berada DI LUAR panel supaya tombol kembali dan Simpan tetap
+   terjangkau saat panel transkrip disembunyikan di layar sempit. */
+.tx-head, .alih { flex-shrink: 0; }
+.ed-grid {
+  display: grid; grid-template-columns: minmax(320px, 34%) 1fr;
+  flex: 1; min-height: 0;
+}
+.pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.pane-ai { border-right: 1px solid var(--line); background: var(--card); }
+
+/* ------------------------------------------------------------ panel kiri */
+.tabs { display: flex; gap: .25rem; padding: .7rem .8rem .5rem; flex-shrink: 0; }
+.tab {
+  flex: 1; padding: .45rem .7rem; border-radius: 7px; border: 1px solid transparent;
+  background: var(--soft); color: var(--muted); font: inherit; font-size: .85rem;
+  font-weight: 500; cursor: pointer;
+}
+.tab:hover { color: var(--ink); }
+.tab.is-on { background: var(--ink); color: var(--card); }
+
+.ai-tools {
+  display: flex; align-items: center; gap: .3rem; padding: 0 .8rem .55rem;
+  border-bottom: 1px solid var(--line); flex-shrink: 0;
+}
+.ico {
+  /* 32px untuk ikon 18px: sisa ruangnya jadi bantalan, sehingga latar hover
+     terbaca sebagai sorotan lembut, bukan blok yang memeluk ikon. */
+  position: relative;
+  width: 32px; height: 32px; border-radius: 7px; border: 1px solid transparent;
+  background: none; color: var(--muted); cursor: pointer; line-height: 1;
+  transition: background-color .13s ease, color .13s ease;
+}
+.ico:hover { background: color-mix(in srgb, var(--accent) 13%, transparent); color: var(--accent); }
+.ico:active { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.ico:disabled { opacity: .3; cursor: not-allowed; }
+.ico:disabled:hover { background: none; color: var(--muted); }
+
+/* Tooltip sendiri: tampil di bawah tombol dan tidak menimpa isi panel,
+   berbeda dari tooltip bawaan peramban yang posisinya tak bisa diatur. */
+.ico[data-tip]::after {
+  content: attr(data-tip);
+  /* Tooltip selalu lebih lebar dari tombol 40px, jadi margin-inline:auto
+     tidak bisa dipakai — margin otomatis tak boleh negatif, hasilnya
+     mentok ke tepi kiri. Yang benar: titik tumpu di tengah tombol, lalu
+     geser balik separuh lebar tooltip sendiri.
+     justify-self meredam place-items:center milik .ico yang berupa grid. */
+  position: absolute; top: calc(100% + 6px);
+  left: 50%; transform: translateX(-50%);
+  justify-self: start; align-self: start;
+  width: max-content;
+  padding: .3rem .5rem; border-radius: 6px;
+  background: var(--ink); color: var(--card);
+  font-size: .72rem; font-weight: 500; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity .12s ease .25s;
+  z-index: 40;
+}
+.ico[data-tip]:hover::after,
+.ico[data-tip]:focus-visible::after { opacity: 1; }
+.ico:disabled::after { content: none; }
+.ai-meta { margin-left: auto; font-size: .72rem; color: var(--muted); }
+
+.ai-body { flex: 1; overflow-y: auto; padding: .9rem 1rem 2rem; font-size: .87rem; line-height: 1.62; }
+.ai-body h3 { font-size: 1rem; margin: 1.1rem 0 .4rem; }
+.ai-body h4, .ai-body h5 { font-size: .88rem; margin: .95rem 0 .3rem; color: var(--accent); }
+.ai-body p { margin: .5rem 0; }
+.ai-body ul { margin: .45rem 0; padding-left: 1.1rem; }
+.ai-body li { margin: .3rem 0; }
+.ai-body hr { border: 0; border-top: 1px solid var(--line); margin: 1rem 0; }
+.ai-body blockquote {
+  margin: .7rem 0; padding: .5rem .75rem; border-left: 2px solid var(--line);
+  color: var(--muted); font-size: .84rem;
+}
+.ai-body blockquote p { margin: .2rem 0; }
+.ai-body code { font-size: .85em; background: var(--soft); padding: .05rem .3rem; border-radius: 4px; }
+.kosong { color: var(--muted); font-size: .86rem; padding: 1.5rem .2rem; }
+.kosong button {
+  display: block; margin-top: .7rem; background: var(--accent); color: var(--accent-ink);
+  border: 0; border-radius: 6px; padding: .45rem .9rem; font: inherit;
+  font-size: .84rem; font-weight: 600; cursor: pointer;
+}
+
+/* ----------------------------------------------------------- panel kanan */
+.tx-head {
+  display: flex; align-items: center; gap: .8rem; padding: .7rem 1rem;
+  border-bottom: 1px solid var(--line); flex-shrink: 0; width: 100%; min-width: 0;
+}
+.back { text-decoration: none; color: var(--muted); font-size: 1.15rem; }
+.back:hover { color: var(--accent); }
+.tx-judul { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+.tx-judul strong {
+  display: block; font-size: .92rem; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.tx-meta { display: flex; gap: .8rem; font-size: .74rem; color: var(--muted); margin-top: .12rem; flex-wrap: wrap; }
+.tx-aksi { display: flex; align-items: center; gap: .7rem; flex-shrink: 0; }
+.dirty { font-size: .74rem; color: var(--accent); }
+
+.catatan-spk {
+  margin: 0; padding: .4rem 1rem; font-size: .74rem; color: var(--muted);
+  background: var(--soft); border-bottom: 1px solid var(--line); flex-shrink: 0;
+}
+
+.cues { list-style: none; margin: 0; padding: .5rem .6rem 1rem; overflow-y: auto; flex: 1; min-height: 0; }
+.cue {
+  display: grid; grid-template-columns: 62px 30px 1fr; gap: .6rem; align-items: start;
+  padding: .45rem .55rem; border-radius: 8px; border: 1px solid transparent;
+}
+.cue:hover { background: var(--soft); }
+.cue.active { background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: color-mix(in srgb, var(--accent) 32%, transparent); }
+.cue.edited .jam { color: var(--accent); font-weight: 600; }
+
+.jam {
+  font: .76rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #5b8def; cursor: pointer; padding-top: .3rem;
+}
+.cue.active .jam { color: var(--accent); }
+.spk {
+  width: 24px; height: 24px; border-radius: 50%; margin-top: .18rem;
+  display: grid; place-items: center; font-size: .7rem; font-weight: 700;
+  background: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--ink);
+}
+.cue textarea {
+  width: 100%; border: 0; background: none; resize: none; overflow: hidden;
+  font: inherit; font-size: .89rem; line-height: 1.55; color: var(--ink);
+  padding: .15rem .25rem; border-radius: 5px;
+}
+.cue textarea:focus { outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+
+.tx-bawah { padding: .4rem 1rem; border-top: 1px solid var(--line); flex-shrink: 0; }
+.gulir { display: flex; align-items: center; gap: .4rem; font-size: .78rem; color: var(--muted); }
+
+/* -------------------------------------------------------------- pemutar */
+.player { border-top: 1px solid var(--line); background: var(--card); flex-shrink: 0; }
+.wave { display: block; width: 100%; height: 56px; cursor: pointer; }
+.seek { display: flex; align-items: center; gap: .6rem; padding: .1rem 1rem .3rem; }
+.seek .t { font: .72rem ui-monospace, Menlo, monospace; color: var(--muted); min-width: 46px; }
+.seek .t:last-child { text-align: right; }
+.seek input[type=range] { flex: 1; }
+input[type=range] { accent-color: var(--accent); height: 4px; }
+.transport { display: flex; align-items: center; gap: .55rem; padding: 0 1rem .65rem; flex-wrap: wrap; }
+.transport button {
+  background: none; border: 1px solid var(--line); color: var(--ink);
+  border-radius: 6px; padding: .28rem .55rem; font-size: .78rem; cursor: pointer;
+}
+.transport button:hover { border-color: var(--accent); color: var(--accent); }
+.transport .play {
+  background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+  padding: .35rem .95rem; font-size: .9rem;
+}
+.vol { display: flex; align-items: center; gap: .3rem; font-size: .8rem; }
+.vol input { width: 78px; }
+.transport select {
+  padding: .22rem .35rem; font-size: .78rem; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--card); color: var(--ink); width: auto;
+}
+.loop { display: flex; align-items: center; gap: .3rem; font-size: .78rem; color: var(--muted); }
+.keys { margin-left: auto; font-size: .72rem; color: var(--muted); }
+
+.tx-bawah { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
+.hitung { margin-left: auto; font-size: .74rem; color: var(--muted); }
+
+/* ------------------------------------------------------------- AI Chat */
+.chat { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.chat[hidden] { display: none; }
+.chat-isi { flex: 1; overflow-y: auto; padding: .9rem 1rem 1rem; }
+
+.saran-judul { margin: 0 0 .6rem; font-size: .78rem; color: var(--muted); }
+.saran-btn {
+  display: block; width: 100%; text-align: left; margin-bottom: .5rem;
+  padding: .65rem .8rem; border-radius: 9px; border: 1px solid var(--line);
+  background: var(--soft); color: var(--ink); font: inherit; font-size: .85rem;
+  font-weight: 400; line-height: 1.45; cursor: pointer;
+}
+.saran-btn:hover { border-color: var(--accent); background: var(--card); }
+
+.pesan { margin-bottom: .85rem; font-size: .86rem; line-height: 1.6; }
+.pesan.saya { display: flex; justify-content: flex-end; }
+.pesan.saya .gel {
+  background: var(--accent); color: var(--accent-ink);
+  padding: .5rem .8rem; border-radius: 12px 12px 3px 12px; max-width: 85%;
+  white-space: pre-wrap;
+}
+.pesan.ai .gel { max-width: 100%; }
+.pesan.ai .gel p { margin: .4rem 0; }
+.pesan.ai .gel ul { margin: .4rem 0; padding-left: 1.1rem; }
+.pesan.ai .gel li { margin: .25rem 0; }
+.pesan.ai .gel h3, .pesan.ai .gel h4, .pesan.ai .gel h5 { font-size: .9rem; margin: .7rem 0 .3rem; }
+.pesan.galat .gel { color: var(--bad); }
+.jam-tautan {
+  color: #5b8def; cursor: pointer; font: .82em ui-monospace, Menlo, monospace;
+  border-bottom: 1px dotted currentColor;
+}
+.jam-tautan:hover { color: var(--accent); }
+.mikir { color: var(--muted); font-size: .84rem; }
+.mikir::after { content: "…"; animation: titik 1.2s steps(4, end) infinite; }
+@keyframes titik { 0% { content: "."; } 33% { content: ".."; } 66% { content: "…"; } }
+
+.chat-kirim {
+  display: flex; gap: .45rem; align-items: flex-end;
+  padding: .6rem .8rem 0; border-top: 1px solid var(--line);
+}
+.chat-kirim textarea {
+  flex: 1; resize: none; max-height: 8rem; overflow-y: auto;
+  padding: .55rem .7rem; border: 1px solid var(--line); border-radius: 9px;
+  background: var(--card); color: var(--ink); font: inherit; font-size: .87rem;
+}
+.chat-kirim textarea:focus { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+.chat-kirim button {
+  width: 34px; height: 34px; padding: 0; border-radius: 9px;
+  font-size: 1rem; line-height: 1; flex-shrink: 0;
+}
+.chat-nota { margin: .45rem .8rem .6rem; font-size: .72rem; color: var(--muted); }
+
+/* ------------------------------------------------- pengalih panel & layar sempit */
+.alih { display: none; }
+
+@media (max-width: 900px) {
+  /* 100dvh, bukan 100vh: bilah alamat peramban seluler menyusut saat digulir
+     dan 100vh menyisakan bagian yang tertutup. */
+  .ed { height: 100dvh; overflow: hidden; }
+
+  .alih {
+    display: flex; gap: .25rem; padding: .5rem .7rem;
+    background: var(--card); border-bottom: 1px solid var(--line);
+  }
+  .alih-btn {
+    flex: 1; padding: .55rem; border-radius: 8px; border: 0;
+    background: var(--soft); color: var(--muted);
+    font: inherit; font-size: .86rem; font-weight: 600; cursor: pointer;
+  }
+  .alih-btn.is-on { background: var(--ink); color: var(--card); }
+
+  .ed-grid { grid-template-columns: 1fr; }
+  .pane-ai, .pane-tx { grid-row: 1; grid-column: 1; }
+  .pane-ai { border-right: 0; }
+  /* Pemutar ada DI DALAM .pane-tx. Menyembunyikan panelnya dengan display:none
+     ikut mematikan pemutar meskipun ia position:fixed — elemen fixed tidak
+     lolos dari induk yang display:none. Jadi yang disembunyikan hanya isinya. */
+  body:not(.lihat-tx) .pane-tx { pointer-events: none; }
+  body:not(.lihat-tx) .pane-tx > *:not(.player) { display: none; }
+  body:not(.lihat-tx) .pane-tx .player { pointer-events: auto; }
+  body.lihat-tx .pane-ai { display: none; }
+
+  /* Pemutar dipaku ke bawah layar supaya terjangkau dari panel mana pun. */
+  .player {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .wave { height: 38px; }
+  .seek { padding: .1rem .8rem .25rem; }
+  .transport { padding: 0 .8rem .5rem; gap: .4rem; }
+  .transport .loop, .keys { display: none; }
+  .vol input { width: 56px; }
+
+  /* ruang agar isi tidak tertutup pemutar */
+  .cues, .ai-body, .chat-isi { padding-bottom: 8.5rem; }
+  .tx-bawah { padding-bottom: 8rem; }
+  .chat-kirim { padding-bottom: .5rem; }
+  .chat-nota { margin-bottom: 8rem; }
+
+  .tx-meta span:nth-child(n+3) { display: none; }   /* sisakan tanggal & durasi */
+}
+
+/* --------------------------------------------- target sentuh (jari, bukan tetikus) */
+@media (max-width: 900px), (pointer: coarse) {
+  .ico { width: 38px; height: 38px; font-size: 1.05rem; }
+  .back { font-size: 1.5rem; padding: .2rem .5rem; }
+  .tab { padding: .6rem .7rem; }
+  .jam { padding-top: .45rem; font-size: .8rem; }
+  .cue { padding: .6rem .55rem; }
+  .cue textarea { font-size: .92rem; padding: .3rem .3rem; }
+  .transport button { padding: .5rem .75rem; font-size: .88rem; min-height: 40px; }
+  .transport .play { padding: .5rem 1.15rem; min-width: 56px; }
+  .transport select { padding: .45rem .5rem; font-size: .85rem; min-height: 40px; }
+  .chat-kirim textarea { font-size: 1rem; min-height: 44px; }   /* 16px cegah zoom iOS */
+  .chat-kirim button { width: 44px; height: 44px; font-size: 1.15rem; }
+  .saran-btn { padding: .8rem .85rem; }
+  input[type=checkbox] { width: 20px; height: 20px; }
+  input[type=range] { height: 22px; }
+  .gulir { font-size: .85rem; gap: .5rem; }
+  #save { padding: .55rem 1rem; min-height: 40px; }
+}
+
+/* ---------------------------------------------------------------- ikon SVG */
+.ico svg { width: 18px; height: 18px; display: block; }
+.back svg, .transport button svg, .chat-kirim button svg, .vol svg {
+  width: 20px; height: 20px; display: block;
+}
+.ico, .back, .chat-kirim button { display: grid; place-items: center; }
+.transport button { display: inline-flex; align-items: center; justify-content: center; }
+.transport .play svg { width: 22px; height: 22px; }
+.vol { gap: .4rem; }
+.vol svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
+@media (max-width: 900px), (pointer: coarse) {
+  .ico svg, .back svg, .transport button svg { width: 22px; height: 22px; }
+  .transport .play svg { width: 24px; height: 24px; }
+  .chat-kirim button svg { width: 22px; height: 22px; }
+}
+
+/* Cincin fokus di toolbar dan tab: offset dirapatkan agar tidak terpotong
+   oleh tepi panel. */
+.ico:focus-visible, .tab:focus-visible, .alih-btn:focus-visible {
+  outline-offset: 1px;
+}
+.tab:focus-visible { border-radius: 7px; }
+
+/* Aturan sentuh global button{min-height:42px} membuat tombol ikon jadi
+   38x42 — kotak hover-nya lonjong. Ikon harus tetap persegi. */
+@media (max-width: 900px), (pointer: coarse) {
+  .ico { min-height: 0; width: 40px; height: 40px; }
+  .ico svg { width: 20px; height: 20px; }
+}
+
+/* Tombol pertama menempel ke tepi panel, sedangkan tooltipnya jauh lebih
+   lebar dari tombol 40px — bila dipusatkan, sisi kirinya terpotong layar.
+   Khusus yang ini tepi kiri tooltip disejajarkan dengan tepi kiri tombol. */
+.ai-tools .ico[data-tip]:first-child::after { left: 0; transform: none; }

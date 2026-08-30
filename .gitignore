@@ -1,0 +1,13 @@
+.venv/
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+__pycache__/
+*.pyc
+.env
+perangkat.json
+folders.json
+
+# Sertifikat CA lokal Caddy — khusus mesin ini, tidak perlu dibagikan.
+caddy-root.crt

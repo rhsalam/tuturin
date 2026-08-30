@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tuturin — ucapan jadi teks</title>
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+<link rel="alternate icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+<meta name="theme-color" content="#b5533a">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <h1 class="merek"><svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true"><path fill="currentColor" d="M14 6h36a12 12 0 0 1 12 12v20a12 12 0 0 1-12 12H28l-12 10a1.6 1.6 0 0 1-2.6-1.2V50h-1.4A10 10 0 0 1 2 40V18A12 12 0 0 1 14 6z"/><g fill="#fff"><rect x="15" y="23" width="6" height="12" rx="3"/><rect x="25" y="17" width="6" height="24" rx="3"/><rect x="35" y="13" width="6" height="32" rx="3"/><rect x="45" y="20" width="6" height="18" rx="3"/></g></svg><span>Tuturin</span></h1>
+    <p>Audio &amp; video ke teks. Berjalan lokal — berkas tidak meninggalkan mesin ini.</p>
+  </div>
+  <div class="ringkas">
+    <span id="ringkas"></span>
+    <a class="lencana" href="/perangkat">Perangkat</a>
+  </div>
+</header>
+
+<main>
+  <!-- ------------------------------------------------ panel unggah -->
+  <section class="unggah">
+    <button class="unggah-kepala" id="toggleUnggah" aria-expanded="true">
+      <span>Transkripsi baru</span><span class="kar" id="karet">▾</span>
+    </button>
+
+    <form id="form" class="unggah-isi">
+      <div id="drop" class="drop">
+        <input type="file" id="file" name="file" multiple
+               accept="audio/*,video/*,.mp3,.wav,.m4a,.mp4,.mkv,.mov,.flac,.ogg,.opus,.webm">
+        <div class="drop-inner">
+          <strong>Seret berkas ke sini</strong>
+          <span>atau klik untuk memilih — bisa beberapa sekaligus</span>
+        </div>
+      </div>
+      <ul id="picked" class="picked" hidden></ul>
+
+      <div class="rekam" id="rekam">
+        <button type="button" class="rekam-btn" id="rekamBtn">
+          <span class="titik"></span><span id="rekamLabel">Rekam mikrofon</span>
+        </button>
+        <button type="button" class="rekam-btn" id="rekamTabBtn">
+          <span class="titik"></span><span id="rekamTabLabel">Rekam audio tab</span>
+        </button>
+        <span class="rekam-waktu" id="rekamWaktu" hidden>0:00</span>
+        <div class="rekam-meter" id="rekamMeter" hidden><i></i></div>
+        <span class="rekam-nota" id="rekamNota"></span>
+      </div>
+
+      <div class="tautan">
+        <label for="url">Atau tempel tautan video</label>
+        <div class="tautan-baris">
+          <input type="url" id="url" name="url" inputmode="url"
+                 autocomplete="off" spellcheck="false"
+                 placeholder="https://www.youtube.com/watch?v=…">
+          <button type="button" class="tautan-hapus" id="urlHapus"
+                  aria-label="Kosongkan tautan" hidden>&times;</button>
+        </div>
+        <span class="tautan-nota" id="urlNota">
+          Audionya diunduh di server, lalu ditranskrip seperti berkas biasa.
+        </span>
+      </div>
+
+      <div class="row">
+        <label>
+          <span>Bahasa</span>
+          <select name="lang" id="lang">
+            <option value="detect">Deteksi otomatis</option>
+            <option value="id">Indonesia</option>
+            <option value="en">Inggris</option>
+            <option value="ar">Arab</option>
+            <option value="ja">Jepang</option>
+            <option value="zh">Mandarin</option>
+          </select>
+        </label>
+        <label>
+          <span>Model</span>
+          <select name="model" id="model">
+            {% for m in models %}
+            <option value="{{ m.name }}" {% if m.name == 'large-v3-turbo' %}selected{% endif %}>
+              {{ m.name }}{% if m.installed %} — terpasang ({{ m.size }}){% else %} — unduh saat dipakai{% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <span>Folder <em>(opsional)</em></span>
+          <select name="folder" id="folder"></select>
+        </label>
+        <fieldset>
+          <span>Format</span>
+          <div class="checks">
+            {% for f in formats %}
+            <label class="chk"><input type="checkbox" name="formats" value="{{ f }}"
+              {% if f in ['txt','srt'] %}checked{% endif %}> {{ f|upper }}</label>
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="actions">
+        <button type="submit" id="submit" disabled>Mulai transkripsi</button>
+        <span class="hint">{{ threads }} thread · antrean berurutan</span>
+      </div>
+      <p id="err" class="err" hidden></p>
+    </form>
+  </section>
+
+  <!-- ------------------------------------------------ pustaka -->
+  <section class="pustaka">
+    <div class="bagian-kepala">
+      <h2>Folder</h2>
+      <button type="button" class="tombol-ringan" id="buatFolder">+ Buat Folder</button>
+    </div>
+    <div class="folder-grid" id="folderGrid"></div>
+
+    <div class="bagian-kepala">
+      <h2 id="berkasJudul">Berkas Terbaru</h2>
+      <span class="ringkas-kecil" id="ringkasBerkas"></span>
+    </div>
+
+    <div class="cari-kotak">
+      <input type="search" id="cari" placeholder="Cari nama berkas…" aria-label="Cari">
+    </div>
+
+    <div class="massal" id="massal" hidden>
+      <button type="button" class="massal-semua" id="pilihSemua" title="Pilih semua / batalkan"></button>
+      <strong id="pilihJumlah">0 dipilih</strong>
+      <div class="massal-ikon">
+        <details class="menu menu-massal" id="menuPindah">
+          <summary id="ikonPindah" title="Pindahkan ke folder" aria-label="Pindahkan ke folder"></summary>
+          <div class="menu-isi" id="isiPindah"></div>
+        </details>
+        <button type="button" data-m="nama" title="Ganti nama" aria-label="Ganti nama"></button>
+        <button type="button" data-m="unduh" title="Unduh transkrip" aria-label="Unduh"></button>
+        <button type="button" data-m="hapus" title="Hapus" aria-label="Hapus"></button>
+      </div>
+    </div>
+
+    <div id="proses"></div>
+    <div id="jobs"></div>
+    <nav class="halaman" id="halaman" hidden></nav>
+  </section>
+</main>
+
+<script src="{{ url_for('static', filename='md.js') }}"></script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

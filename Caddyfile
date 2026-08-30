@@ -1,0 +1,29 @@
+# HTTPS lokal untuk transkrip-web.
+#
+# Alasan adanya berkas ini: peramban hanya memberikan mikrofon, papan klip, dan
+# passkey pada "konteks aman". Di HTTP biasa ketiganya mati — itulah sebabnya
+# merekam dari ponsel mustahil tanpa lapisan ini.
+#
+# Port 8443, bukan 443, supaya Caddy tidak perlu dijalankan sebagai root.
+# Sertifikatnya diterbitkan CA lokal Caddy sendiri (tls internal), jadi tidak
+# ada urusan dengan internet atau nama domain.
+{
+	admin off
+	auto_https disable_redirects
+}
+
+localhost:8443, 127.0.0.1:8443, 192.168.1.23:8443 {
+	tls internal
+
+	# Unggahan audio bisa besar; samakan dengan batas Flask.
+	request_body {
+		max_size 4GB
+	}
+
+	reverse_proxy 127.0.0.1:5005 {
+		# Caddy sudah mengirim X-Forwarded-For/Proto/Host secara bawaan.
+		# Flask membacanya lewat ProxyFix agar pembatas percobaan melihat
+		# alamat asli penelepon, bukan 127.0.0.1 milik proxy.
+		flush_interval -1
+	}
+}

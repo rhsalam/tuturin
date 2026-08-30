@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ job.judul }} — Tuturin</title>
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+<link rel="alternate icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+<meta name="theme-color" content="#b5533a">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}">
+</head>
+<body class="ed" data-job="{{ job.id }}" data-formats="{{ job.outputs|join(',') }}">
+
+<header class="tx-head">
+    <a class="back" href="/" title="Kembali" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></a>
+    <div class="tx-judul">
+      <strong title="{{ job.judul }}">{{ job.judul }}</strong>
+      <div class="tx-meta">
+        <span id="tanggal"></span>
+        <span>⏱ <b id="durasi">{{ job.duration }}</b></span>
+        <span>{{ job.lang }}</span>
+        <span>{{ job.model }}</span>
+      </div>
+    </div>
+    <div class="tx-aksi">
+      <span id="dirty" class="dirty" hidden>belum disimpan</span>
+      <button id="save" disabled>Simpan</button>
+    </div>
+  </header>
+
+<!-- pengalih panel, hanya tampil di layar sempit -->
+<nav class="alih" id="alih">
+  <button class="alih-btn is-on" data-panel="ai">AI</button>
+  <button class="alih-btn" data-panel="tx">Transkrip</button>
+</nav>
+
+<div class="ed-grid">
+
+  <!-- ============================ panel kiri: keluaran AI -->
+  <section class="pane pane-ai">
+    <nav class="tabs" role="tablist">
+      <button class="tab" data-tab="chat" role="tab">AI Chat</button>
+      <button class="tab is-on" data-tab="ringkasan" role="tab">Ringkasan</button>
+      <button class="tab" data-tab="rapi" role="tab">Transkrip Rapi</button>
+    </nav>
+
+    <div class="ai-tools">
+      <button class="ico" data-act="salin" data-tip="Salin ke papan klip" aria-label="Salin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button>
+      <button class="ico" data-act="unduh" data-tip="Unduh DOCX" aria-label="Unduh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 10.5 12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>
+      <button class="ico" data-act="ulang" data-tip="Buat ulang" aria-label="Buat ulang"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-1.9 6.3"/><path d="M20 4v6h-6"/></svg></button>
+      <span class="ai-meta" id="aiMeta"></span>
+    </div>
+
+    <div class="ai-body" id="aiBody" hidden>
+      <p class="kosong">memuat…</p>
+    </div>
+
+    <!-- panel chat: daftar pesan + kotak kirim -->
+    <div class="chat" id="chat">
+      <div class="chat-isi" id="chatIsi">
+        <div class="saran" id="saran">
+          <p class="saran-judul">Menyiapkan saran pertanyaan…</p>
+        </div>
+      </div>
+      <form class="chat-kirim" id="chatForm">
+        <textarea id="tanya" rows="1" placeholder="Masukkan teks Anda di sini…"
+                  aria-label="Pertanyaan"></textarea>
+        <button type="submit" id="kirim" title="Kirim (Enter)" aria-label="Kirim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg></button>
+      </form>
+      <p class="chat-nota">Jawaban dibuat DeepSeek dari isi transkrip — dikirim keluar mesin ini.</p>
+    </div>
+  </section>
+
+  <!-- ============================ panel kanan: transkrip + pemutar -->
+  <section class="pane pane-tx">
+
+    <p class="catatan-spk">
+      Pemisahan pembicara belum aktif — seluruh baris ditandai sebagai satu pembicara.
+    </p>
+
+    <ol id="list" class="cues"><li class="kosong">memuat cue…</li></ol>
+
+    <div class="tx-bawah">
+      <label class="gulir"><input type="checkbox" id="auto" checked> Gulir Otomatis</label>
+      <label class="gulir"><input type="checkbox" id="gabung" checked> Gabung ucapan</label>
+      <span class="hitung" id="hitung"></span>
+    </div>
+
+    <footer class="player">
+      <canvas id="wave" class="wave" height="56"></canvas>
+      <div class="seek">
+        <span class="t" id="tNow">0:00</span>
+        <input type="range" id="bar" min="0" max="1000" value="0" step="1" aria-label="Posisi">
+        <span class="t" id="tEnd">0:00</span>
+      </div>
+      <div class="transport">
+        <button id="back10" title="Mundur 10 detik" aria-label="Mundur 10 detik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 5v5h5"/><path d="M4.1 10A8.5 8.5 0 1 1 3.6 14"/><text x="12" y="16" font-size="8.5" font-weight="600" text-anchor="middle" fill="currentColor" stroke="none">10</text></svg></button>
+        <button id="play" class="play" title="Putar / jeda (Spasi)" aria-label="Putar"></button>
+        <button id="fwd10" title="Maju 10 detik" aria-label="Maju 10 detik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 5v5h-5"/><path d="M19.9 10A8.5 8.5 0 1 0 20.4 14"/><text x="12" y="16" font-size="8.5" font-weight="600" text-anchor="middle" fill="currentColor" stroke="none">10</text></svg></button>
+        <label class="vol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M15.5 9.5a4 4 0 0 1 0 5"/><path d="M18 7a7.5 7.5 0 0 1 0 10"/></svg><input type="range" id="vol" min="0" max="100" value="100" aria-label="Volume"></label>
+        <select id="rate" aria-label="Kecepatan">
+          <option value="0.5">0,5×</option><option value="0.75">0,75×</option>
+          <option value="1" selected>1×</option><option value="1.25">1,25×</option>
+          <option value="1.5">1,5×</option><option value="2">2×</option>
+        </select>
+        <label class="loop"><input type="checkbox" id="loop"> Ulang cue</label>
+        <span class="keys">Spasi putar · Tab cue berikutnya · Esc keluar teks</span>
+      </div>
+    </footer>
+  </section>
+</div>
+
+<audio id="audio" src="/api/jobs/{{ job.id }}/audio" preload="metadata"></audio>
+<script>window.JOB_CREATED = {{ job.created }};</script>
+<script src="{{ url_for('static', filename='md.js') }}"></script>
+<script src="{{ url_for('static', filename='editor.js') }}"></script>
+</body>
+</html>

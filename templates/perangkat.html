@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perangkat — Tuturin</title>
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+<link rel="alternate icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+<meta name="theme-color" content="#b5533a">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <h1>Perangkat</h1>
+    <p>Perangkat yang boleh masuk tanpa mengetik sandi lagi.</p>
+  </div>
+  <div class="ringkas"><a class="lencana on" href="/">&larr; Kembali</a></div>
+</header>
+
+<main>
+  <p class="peringatan-http">
+    Koneksi ini memakai HTTP tanpa enkripsi. Token perangkat melintas terbuka di
+    jaringan, jadi cabut perangkat yang hilang atau tidak Anda kenali.
+  </p>
+
+  <div id="jobs">
+    {% for d in daftar %}
+    <article class="kartu">
+      <div class="k-kiri">
+        <div class="k-nama">
+          {{ d.label }}
+          {% if d.ini %}<span class="lencana on">perangkat ini</span>{% endif %}
+        </div>
+        <div class="k-meta">
+          pertama masuk {{ d.dibuat | int | tanggal }} ·
+          terakhir dipakai {{ d.terakhir | int | tanggal }}
+        </div>
+      </div>
+      <div class="k-kanan">
+        <form method="post" action="{{ url_for('cabut_perangkat') }}">
+          <input type="hidden" name="sidik" value="{{ d.sidik }}">
+          <button class="hapus" type="submit">
+            {% if d.ini %}Cabut &amp; keluar{% else %}Cabut{% endif %}
+          </button>
+        </form>
+      </div>
+    </article>
+    {% else %}
+    <p class="kosong">Belum ada perangkat yang diingat.</p>
+    {% endfor %}
+  </div>
+
+  {% if daftar | length > 1 %}
+  <form method="post" action="{{ url_for('cabut_perangkat_lain') }}" class="cabut-lain">
+    <button class="hapus" type="submit"
+            onclick="return confirm('Cabut semua perangkat lain? Mereka harus mengetik sandi lagi.')">
+      Cabut semua kecuali perangkat ini
+    </button>
+  </form>
+  {% endif %}
+</main>
+
+</body>
+</html>
